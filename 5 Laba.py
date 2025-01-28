@@ -6,80 +6,90 @@
 import time
 import math
 import matplotlib.pyplot as plt
-import sys
 
-def recursive_f(n):
+# Рекурсивная функция для вычисления факториала
+def recursive_factorial(n):
+    if n == 0 or n == 1:
+        return 1
+    return n * recursive_factorial(n - 1)
+
+# Итеративная функция для вычисления факториала
+def iterative_factorial(n):
+    result = 1
+    for i in range(2, n + 1):
+        result *= i
+    return result
+
+# Рекурсивная функция для вычисления F(n)
+def recursive_F(n):
     if n < 2:
         return -23
-    if n % 2 == 0:
-        return (-1)**n * (recursive_f(n-1) - (n-2))
+    elif n % 2 == 0:
+        return (-1)**n * (recursive_F(n - 1) - (n - 2))
     else:
-        return (n-2) / math.factorial(2*n) - recursive_f(n-1)
+        return ((n - 2) / math.factorial(2 * n)) - recursive_F(n - 1)
 
-def iterative_f(n):
+# Итеративная функция для вычисления F(n)
+def iterative_F(n):
     if n < 2:
         return -23
-    f_prev = -23
-    for i in range(2, n+1):
+    result = -23
+    for i in range(2, n + 1):
         if i % 2 == 0:
-            f_curr = (-1)**i * (f_prev - (i-2))
+            result = (-1)**i * (result - (i - 2))
         else:
-            f_curr = (i-2) / math.factorial(2*i) - f_prev
-        f_prev = f_curr
-    return f_prev
+            result = ((i - 2) / math.factorial(2 * i)) - result
+    return result
 
-def compare_times_and_limits(max_n):
-    recursive_times = []
-    iterative_times = []
-    values = []
-    recursion_limit = sys.getrecursionlimit()
-    max_recursive_n = None
+# Функция для измерения времени
+def score_time(func, n):
+    start_time = time.time()
+    try:
+        func(n)
+    except (RecursionError, OverflowError):
+        return float('inf')  # Для случаев, когда функция не может быть вычислена
+    end_time = time.time()
+    return (end_time - start_time) * 1000  # перевод в миллисекунды
 
-    for n in range(1, max_n + 1):
-        start_time = time.time()
-        try:
-            recursive_f(n)
-            recursive_times.append(time.time() - start_time)
-            max_recursive_n = n
-        except RecursionError:
-            recursive_times.append(None)
-            break
+# Значения n для которых мы хотим измерить время выполнения
+n_values = range(2, 100)
+recursive_times = []
+iterative_times = []
 
-        start_time = time.time()
-        iterative_f(n)
-        iterative_times.append(time.time() - start_time)
+# Границы применимости
+recursive_limit = None
+iterative_limit = None
+# Измерение времени выполнения для каждого значения n
+for n in n_values:
+    rec_time = score_time(recursive_F, n)
+    iter_time = score_time(iterative_F, n)
 
-        values.append(n)
+    # Проверка, где рекурсивная функция перестает работать
+    if rec_time == float('inf') and recursive_limit is None:
+        recursive_limit = n - 1  # Предыдущее значение было последним успешным
 
-    return values, recursive_times, iterative_times, max_recursive_n, recursion_limit
+    # Проверка времени итеративной функции
+    if iter_time != float('inf'):
+        iterative_limit = n  # Последнее успешное значение
 
-def plot_results(values, recursive_times, iterative_times):
-    plt.figure(figsize=(10, 6))
-    filtered_recursive_times = [t if t is not None else float('nan') for t in recursive_times]
-    plt.plot(values, filtered_recursive_times, label='Рекурсивный подход', marker='o')
-    plt.plot(values, iterative_times, label='Итерационный подход', marker='s')
-    plt.xlabel('n')
-    plt.ylabel('Время выполнения (секунды)')
-    plt.title('Сравнение времени выполнения рекурсивного и итерационного подходов')
-    plt.legend()
-    plt.grid()
-    plt.show()
+    recursive_times.append(rec_time)
+    iterative_times.append(iter_time)
 
-if __name__ == "__main__":
-    max_n = 100
-    values, recursive_times, iterative_times, max_recursive_n, recursion_limit = compare_times_and_limits(max_n)
+# Вывод результатов в табличной форме
+print(f"{'n':<10}{'Рекурсивное время (мс)':<25}{'Итерационное время (мс)':<25}")
+for i, n in enumerate(n_values):
+    print(f"{n:<10}{recursive_times[i]:<25.5f}{iterative_times[i]:<25.5f}")
 
-    print("n\tРекурсивный (с)\tИтерационный (с)")
-    for i in range(len(values)):
-        if recursive_times[i] is not None:
-            recursive_time_str = f"{recursive_times[i]:.6f}"
-        else:
-            recursive_time_str = "RecursionError"
-        print(f"{values[i]}\t{recursive_time_str}\t\t{iterative_times[i]:.6f}")
-
-    print("\nГраницы применимости:")
-    print(f"Максимальное значение n для рекурсии: {max_recursive_n}")
-    print(f"Ограничение стека рекурсии: {recursion_limit}")
+# Построение и вывод графика результатов
+plt.figure(figsize=(10, 6))
+plt.plot(n_values, recursive_times, label='Рекурсивно', marker='o')
+plt.plot(n_values, iterative_times, label='Итерационно', marker='o')
+plt.xlabel('n')
+plt.ylabel('Время (в миллисекундах)')
+plt.legend()
+plt.title('Сравнение времени вычисления функции F(n)')
+plt.grid()
+plt.show()
 
     plot_results(values, recursive_times, iterative_times)
 
