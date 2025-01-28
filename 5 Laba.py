@@ -91,5 +91,4 @@ plt.title('Сравнение времени вычисления функции
 plt.grid()
 plt.show()
 
-    plot_results(values, recursive_times, iterative_times)
 
